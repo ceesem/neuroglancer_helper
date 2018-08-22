@@ -8,6 +8,9 @@ from time import sleep
 import numpy as np
 import copy
 
+def set_neuroglancer_static_source( url ):
+    neuroglancer.set_static_content_source(url=url) 
+
 def show_link( url, text='Link'):
     display(HTML('<a href={}>{}</a>'.format(url,text)))
 
@@ -43,6 +46,7 @@ class ng_url_viewer( ):
     @classmethod
     def from_viewer( cls, old_viewer ):
         state= viewer.state
+        state.showSlices=False
         base = neuroglancer.url_state.default_neuroglancer_url
         return cls( state=state, base=base )
 
@@ -107,7 +111,7 @@ def add_selected_objects( viewer, object_ids, layer_name = 'segmentation' ):
     if not isinstance(object_ids, Iterable):
         object_ids = [object_ids]
     with viewer.txn() as s:
-        s.layers[layer_name].segments.update(object_ids) 
+        s.layers[layer_name].segments.update(np.int64(object_ids)) 
     return viewer
 
 def get_selected_objects( viewer, layer_name = 'segmentation' ):
@@ -126,11 +130,11 @@ def set_annotation_color( viewer, layer_name, color ):
 def get_annotation_color( viewer, layer_name ):
     return viewer.state.layers[layer_name].annotationColor
 
-def add_annotation_layer( viewer, xyz, layer_name, verbose=True):
+def add_annotation_layer( viewer, layer_name, verbose=True):
     if (layer_name in [l.name for l in viewer.state.layers]) & (verbose):
         print('{} is already a layer!'.format(layer_name))
     else:
-        with viewer.txn as s:
+        with viewer.txn() as s:
             s.layers.append( name=layer_name,
                              layer=neuroglancer.AnnotationLayer() )
 
